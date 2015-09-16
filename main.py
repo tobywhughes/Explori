@@ -10,12 +10,10 @@ class Screen(QWidget):
     path = "~\\"
     home = "~\\"
     input_holder = ""
-    current_path_dir = [ ]
     
     def __init__(self):
         super(Screen, self).__init__()
         self.initScreen()
-        self.get_current_path_dir()
  
     def initScreen(self):
         self.setGeometry(0,0,500,900)
@@ -58,11 +56,6 @@ class Screen(QWidget):
         holder = self.path.split("\\")
         return "\\".join(holder[0:-2]) + "\\"
 
-    def get_current_path_dir(self):
-        del current_path_dir [:]
-        for items in os.scandir(path):
-            current_path_dir.append(items)
-            print(items.name)        
 
 def run_gui():
     app = QApplication(sys.argv)
