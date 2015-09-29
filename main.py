@@ -1,20 +1,21 @@
 #Explori File Explorer
 
-import sys, os
+import sys, os, webbrowser
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+import path
 
 class Screen(QWidget):
 
 
-    home = os.path.expanduser('~')
-    path = home 
     current_level_list = []
    
     #Flags
     hidden_flag = True
 
     def __init__(self):
+        self.path = path.Path()
         #initial gui setup
         super(Screen, self).__init__()
         self.get_current_level()
@@ -23,7 +24,7 @@ class Screen(QWidget):
         self.setFocus()
 
         #Creates widgets for screen
-        self.path_label = QLabel(self.path)
+        self.path_label = QLabel(self.path.path)
 
         self.list_widget = QListWidget()
         self.get_current_level()
@@ -39,7 +40,8 @@ class Screen(QWidget):
  
     def keyPressEvent(self,event):
         
-        #Scrolls through list_widget. May (probably) not the best way to do this with Qt/PyQt. Still looking for a cleaner alternative
+        #Scrolls through list_widget. May (probably) not the best way to do this with Qt/PyQt. 
+        #Still looking for a cleaner alternative
         if event.key() == Qt.Key_Down or Qt.Key_Up:
             self.list_widget.keyPressEvent(event)
         
@@ -57,14 +59,14 @@ class Screen(QWidget):
 
         #Backwards Traversal
         if event.key() == Qt.Key_Backspace:
-            self.path = self.back_traverse()
-            self.path_label.setText(self.path)            
+            self.path.back_traverse()
+            self.path_label.setText(self.path.path)            
             self.path_update_event()
  
         #Go to home directory  
         if event.key() == Qt.Key_Home:
-            self.path = self.home
-            self.path_label.setText(self.path)
+            self.path.path = self.home
+            self.path_label.setText(self.path.path)
             self.path_update_event()
 
         #Go to selection
@@ -80,8 +82,8 @@ class Screen(QWidget):
 
     #Edits path after return is pressed
     def send_line_edit(self):
-        self.path = self.path + '/' + str(self.line_edit.text())
-        self.path_label.setText(self.path)
+        self.path.path = self.path.path + '/' + str(self.line_edit.text())
+        self.path_label.setText(self.path.path)
         self.layout.removeWidget(self.line_edit)
         self.line_edit.releaseKeyboard()
         self.setFocus()
@@ -91,38 +93,64 @@ class Screen(QWidget):
 
     def list_view_enter(self):
         current_item = self.list_widget.currentItem()
-        self.path = self.path + '/' + current_item.text()
-        self.path_update_event()
-
-    #Returns to the directory one level up
-    def back_traverse(self):
-        holder = self.path.split('/')
-        return '/'.join(holder[0:-1])
+        self.path.path = self.path.path + '/' + current_item.text()
+        self.path_update_event(current_item.whatsThis())
 
     #Grabs all files and directories from current directory
     def get_current_level(self):
         del self.current_level_list[:]
-        for items in os.listdir(self.path):
+        for items in os.listdir(self.path.path):
+            item_type = self.get_item_type(items)
+            item_tuple = (items, item_type)
             if self.hidden_flag:
                 if items[0] != '.':
-                    self.current_level_list.append(items)
+                    self.current_level_list.append(item_tuple)
                     
             else:
-                self.current_level_list.append(items)
+                self.current_level_list.append(item_tuple)
+    
+    #Simple algorithm to determine filetype. Currently no method to weed out directories with periods in their names
+    def get_item_type(self, item):
+        #Ignore if file/dir is hidden or not
+        if item[0] == '.':
+            item = item[1:]
+        item_index = len(item) - item[::-1].find('.')
+        if (item_index > len(item)):
+            return 'Directory'
+        else:
+            return item[item_index:]
 
     def update_list_widget(self):
         self.list_widget.clear()
         for item in self.current_level_list:
-            self.list_widget.addItem(item)
+            list_item = QListWidgetItem(item[0])
+            list_item.setBackground(self.assign_color(item[1]))
+            list_item.setWhatsThis(item[1])
+            self.list_widget.addItem(list_item)
 
-    def path_update_event(self):
+    #Color codes QListWidget items.
+    #Will eventually create customizable system
+    def assign_color(self, file_type):
+            if file_type != 'Directory':
+                return QColor(255,0,0,150)
+            else:
+                return QColor(255,255,255)
+
+    def path_update_event(self, file_type = 'Directory'):
         try:
-            self.get_current_level()
-            self.update_list_widget()
-            self.path_label.setText(self.path);
+            if file_type == 'Directory':
+                self.get_current_level()
+                self.update_list_widget()
+                self.path_label.setText(self.path.path)
+            else:
+                try:
+                    webbrowser.open(self.path.path)
+                except Error:
+                    print('Debug - File Cannot Open')
+                    self.path.back_traverse()
         except NotADirectoryError:
             print('Debug - Path Error')
-            self.back_traverse()
+            self.path.back_traverse()
 
     def toggle_hidden(self):
         if self.hidden_flag:
