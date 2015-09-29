@@ -4,21 +4,24 @@ import sys, os
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-
 class Screen(QWidget):
 
 
     home = os.path.expanduser('~')
     path = home 
     current_level_list = []
-    
+   
+    #Flags
+    hidden_flag = True
+
     def __init__(self):
         #initial gui setup
         super(Screen, self).__init__()
         self.get_current_level()
         self.setGeometry(0,0,0,0)
         self.setWindowTitle('Explori File Explorer')
-        
+        self.setFocus()
+
         #Creates widgets for screen
         self.path_label = QLabel(self.path)
 
@@ -33,13 +36,21 @@ class Screen(QWidget):
         self.layout.addWidget(self.list_widget)
         self.setLayout(self.layout)
         self.show()
-    
+ 
     def keyPressEvent(self,event):
         
+        #Scrolls through list_widget. May (probably) not the best way to do this with Qt/PyQt. Still looking for a cleaner alternative
+        if event.key() == Qt.Key_Down or Qt.Key_Up:
+            self.list_widget.keyPressEvent(event)
+        
+        #Key to toggle hidden
+        if event.key() == Qt.Key_Q:
+            self.toggle_hidden()
+
         #Path Input
         if event.key() == Qt.Key_Shift:
             try:
-                if self.line_edit == None:
+                if self.line_edit is None:
                     self.get_input()
             except AttributeError:
                 self.get_input()
@@ -73,12 +84,12 @@ class Screen(QWidget):
         self.path_label.setText(self.path)
         self.layout.removeWidget(self.line_edit)
         self.line_edit.releaseKeyboard()
+        self.setFocus()
         self.line_edit.close()
         self.line_edit = None
         self.path_update_event()
 
     def list_view_enter(self):
-        print("Triggered")
         current_item = self.list_widget.currentItem()
         self.path = self.path + '/' + current_item.text()
         self.path_update_event()
@@ -92,7 +103,12 @@ class Screen(QWidget):
     def get_current_level(self):
         del self.current_level_list[:]
         for items in os.listdir(self.path):
-            self.current_level_list.append(items)
+            if self.hidden_flag:
+                if items[0] != '.':
+                    self.current_level_list.append(items)
+                    
+            else:
+                self.current_level_list.append(items)
 
     def update_list_widget(self):
         self.list_widget.clear()
@@ -100,8 +116,21 @@ class Screen(QWidget):
             self.list_widget.addItem(item)
 
     def path_update_event(self):
-        self.get_current_level()
-        self.update_list_widget()
+        try:
+            self.get_current_level()
+            self.update_list_widget()
+            self.path_label.setText(self.path);
+        except NotADirectoryError:
+            print('Debug - Path Error')
+            self.back_traverse()
+
+    def toggle_hidden(self):
+        if self.hidden_flag:
+            self.hidden_flag = False
+        else:
+            self.hidden_flag = True
+        self.path_update_event()
+
 
 
 def run_gui():
