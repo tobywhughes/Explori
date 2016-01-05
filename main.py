@@ -4,7 +4,7 @@ import sys, os, webbrowser
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-import path
+import path, superconfig
 
 class Screen(QWidget):
 
@@ -15,12 +15,15 @@ class Screen(QWidget):
     hidden_flag = True
 
     def __init__(self):
+        
+        self.config = superconfig.Config()
+
         self.path = path.Path()
         #initial gui setup
         super(Screen, self).__init__()
         self.get_current_level()
         self.setGeometry(0,0,0,0)
-        self.setWindowTitle('Explori File Explorer')
+        self.setWindowTitle(self.config.title)
         self.setFocus()
 
         #Creates widgets for screen
@@ -29,8 +32,8 @@ class Screen(QWidget):
         self.list_widget = QListWidget()
         self.get_current_level()
         self.update_list_widget()
-        self.list_widget.setGridSize(QSize(150,20))
-        self.list_widget.setMinimumSize(150,415)
+        self.list_widget.setGridSize(QSize(self.config.tab_width, self.config.tab_height))
+        self.list_widget.setMinimumSize(self.config.width, self.config.height)
         #Creates Layout
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.path_label)
@@ -116,7 +119,7 @@ class Screen(QWidget):
             item = item[1:]
         item_index = len(item) - item[::-1].find('.')
         if (item_index > len(item)):
-            return 'Directory'
+            return 'FOLDER'
         else:
             return item[item_index:]
 
@@ -131,14 +134,14 @@ class Screen(QWidget):
     #Color codes QListWidget items.
     #Will eventually create customizable system
     def assign_color(self, file_type):
-            if file_type != 'Directory':
-                return QColor(255,0,0,150)
-            else:
-                return QColor(255,255,255)
-
-    def path_update_event(self, file_type = 'Directory'):
+                if file_type in self.config.color_dict:
+                    QValue = self.config.color_dict[file_type]
+                    return QColor(QValue[0], QValue[1], QValue[2], QValue[3])
+                else:
+                    return QColor(255, 255, 255, 255)
+    def path_update_event(self, file_type = 'FOLDER'):
         try:
-            if file_type == 'Directory':
+            if file_type == 'FOLDER':
                 self.get_current_level()
                 self.update_list_widget()
                 self.path_label.setText(self.path.path)
