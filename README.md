@@ -1,7 +1,7 @@
 # Explori
 
 
-Explori is a file explorer that seeks to make file exploration on linux systems easier and more comfortable. The vision for this software is to provide a quick and efficient method of traversing, opening, and managing files, while also providing a sleek yet completely customizable interface. These two core principles are aimed at two major sections of the linux userbase - thouse who love linux for improving their workflow and those who enjoy software that both works and is customizable to the users tastes.
+Explori is a file explorer that seeks to make file exploration on linux systems easier and more comfortable. The vision for this software is to provide a quick and efficient method of traversing, opening, and managing files, while also providing a sleek yet completely customizable interface. These two core principles are aimed at two major sections of the linux community - those who love linux for improving their workflow and those who enjoy software that both works and is customizable to the users tastes.
 
 Short term goals:
 
