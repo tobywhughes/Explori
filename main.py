@@ -4,10 +4,10 @@ import sys, os, webbrowser
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-import path, superconfig
+import path, superconfig, filemanage
 
-class Screen(QWidget):
-
+    
+class Screen(QWidget):   
 
     current_level_list = []
    
@@ -29,6 +29,7 @@ class Screen(QWidget):
         #Creates widgets for screen
         self.path_label = QLabel(self.path.path)
 
+
         self.list_widget = QListWidget()
         self.get_current_level()
         self.update_list_widget()
@@ -47,7 +48,9 @@ class Screen(QWidget):
         #Still looking for a cleaner alternative
         if event.key() == Qt.Key_Down or Qt.Key_Up:
             self.list_widget.keyPressEvent(event)
-        
+       
+        self.setFocus()
+
         #Key to toggle hidden
         if event.key() == Qt.Key_Q:
             self.toggle_hidden()
@@ -75,6 +78,10 @@ class Screen(QWidget):
         #Go to selection
         if event.key() == Qt.Key_Return:
             self.list_view_enter()
+
+        #Delete File
+        if event.key() == Qt.Key_Delete:
+            self.delete_prompt()
     
     #Creates input bar to get path input
     def get_input(self):
@@ -162,6 +169,45 @@ class Screen(QWidget):
             self.hidden_flag = True
         self.path_update_event()
 
+    def delete_prompt(self):
+        self.dconf_label = QDialog()
+        self.dconf_label.layout = QVBoxLayout()
+        self.dconf_label.setLayout(self.dconf_label.layout)
+        self.dconf_label.setWindowFlags(Qt.FramelessWindowHint)
+        self.dconf_label.setFixedSize(150, 120)
+        self.dconf_label.setGeometry(0,0,0,0)
+
+        self.warn_label = QLabel()
+        self.warn_label.setText("Confirm Delete?")    
+        self.warn_label.setGeometry(0,0,150, 20)
+        self.warn_label.setAlignment(Qt.AlignCenter)
+
+        self.push_confirm = QPushButton()
+        self.push_confirm.setText("Confirm")
+        self.push_confirm.setGeometry(0,0,100,20)
+
+        self.push_decline = QPushButton()
+        self.push_decline.setText("Decline")
+        self.push_decline.setGeometry(0,0,100,20)
+
+        for widget_item in [self.warn_label, self.push_confirm, self.push_decline]:
+            self.dconf_label.layout.addWidget(widget_item)
+        self.dconf_label.show()
+
+        self.push_confirm.clicked.connect(self.confirm_pressed)
+        self.push_decline.clicked.connect(self.decline_pressed)
+
+    def confirm_pressed(self):
+        filemanage.delete_file(self.path.path + '/' + self.list_widget.currentItem().text())
+        self.path_update_event()
+        self.dconf_label.releaseKeyboard()
+        self.dconf_label.close()
+        self.setFocus()
+
+    def decline_pressed(self):
+        self.dconf_label.releaseKeyboard()
+        self.dconf_label.close()
+        self.setFocus()
 
 
 def run_gui():
