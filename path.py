@@ -6,6 +6,10 @@ class Path():
 
     def __init__(self):
         self.path = self.home
+        self.copy_path = ''
+        self.copy_file_name = ''
+        clipboard_flag = False
+        del_flag = False
 
     def back_traverse(self):
         if not os.path.samefile(self.path, '/home') and not os.path.samefile(self.path, '/'):

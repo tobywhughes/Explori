@@ -82,7 +82,30 @@ class Screen(QWidget):
         #Delete File
         if event.key() == Qt.Key_Delete:
             self.delete_prompt()
-    
+
+        #Copy file to clipboard - no delete
+        if event.key() == Qt.Key_C and Qt.ControlModifier:
+            self.path.copy_file_name = self.list_widget.currentItem().text()
+            self.path.copy_path = self.path.path + '/' + self.path.copy_file_name
+            self.path.copy_flag = True
+            self.path.del_flag = False
+
+        #Copy file to clipboard - delete
+        if event.key() == Qt.Key_X and Qt.ControlModifier:
+            self.path.copy_file_name = self.list_widget.currentItem().text()
+            self.path.copy_path = self.path.path + '/' + self.path.copy_file_name
+            self.path.copy_flag = True
+            self.path.del_flag = True
+
+        #Paste copy
+        if event.key() == Qt.Key_V and Qt.ControlModifier:
+            if self.path.copy_flag:
+                if not self.path.del_flag:
+                    filemanage.copy_file(self.path.copy_path, self.path.copy_file_name, self.path.path, self.path.del_flag)
+                    self.path_update_event()
+                else:
+                    self.delete_prompt('cut_paste')
+
     #Creates input bar to get path input
     def get_input(self):
         self.line_edit = QLineEdit()
@@ -102,7 +125,7 @@ class Screen(QWidget):
         self.path_update_event()
 
     def list_view_enter(self):
-        current_item = self.list_widget.currentItem()
+        current_item = self.list_widget.currentItem()   
         self.path.path = self.path.path + '/' + current_item.text()
         self.path_update_event(current_item.whatsThis())
 
@@ -169,7 +192,7 @@ class Screen(QWidget):
             self.hidden_flag = True
         self.path_update_event()
 
-    def delete_prompt(self):
+    def delete_prompt(self, tag = 'normal'):
         self.dconf_label = QDialog()
         self.dconf_label.layout = QVBoxLayout()
         self.dconf_label.setLayout(self.dconf_label.layout)
@@ -193,8 +216,11 @@ class Screen(QWidget):
         for widget_item in [self.warn_label, self.push_confirm, self.push_decline]:
             self.dconf_label.layout.addWidget(widget_item)
         self.dconf_label.show()
-
-        self.push_confirm.clicked.connect(self.confirm_pressed)
+	
+        if tag == 'normal':
+            self.push_confirm.clicked.connect(self.confirm_pressed)
+        elif tag == 'cut_paste':
+             self.push_confirm.clicked.connect(self.cut_confirm_pressed)
         self.push_decline.clicked.connect(self.decline_pressed)
 
     def confirm_pressed(self):
@@ -205,6 +231,13 @@ class Screen(QWidget):
         self.setFocus()
 
     def decline_pressed(self):
+        self.dconf_label.releaseKeyboard()
+        self.dconf_label.close()
+        self.setFocus()
+
+    def cut_confirm_pressed(self):
+        filemanage.copy_file(self.path.copy_path, self.path.copy_file_name, self.path.path, self.path.del_flag)
+        self.path_update_event()
         self.dconf_label.releaseKeyboard()
         self.dconf_label.close()
         self.setFocus()
