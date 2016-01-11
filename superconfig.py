@@ -18,7 +18,10 @@ class Config:
     def read_data(self):
         with open('config.cfg', 'r') as config_file:
             for current_line in config_file:
+                #Splits line by white spaces
                 current_line_parsed = current_line.split()
+
+                #Grabs data that happens to be in config file
                 if len(current_line_parsed) == 0:
                     pass
                 elif current_line_parsed[0][0] == '#':
@@ -51,9 +54,3 @@ class Config:
 
                 elif current_line_parsed[0][0] == '.':
                     self.color_dict[current_line_parsed[0][1:]] = int(current_line_parsed[1]), int(current_line_parsed[2]), int(current_line_parsed[3]), int(current_line_parsed[4])
-
-
-#For testing
-
-if __name__ == "__main__":
-    testcfg = Config()

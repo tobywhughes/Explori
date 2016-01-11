@@ -57,6 +57,7 @@ class Screen(QWidget):
 
         #Path Input
         if event.key() == Qt.Key_Shift:
+            #Try-Except prevents multiple input bars from opening up
             try:
                 if self.line_edit is None:
                     self.get_input()
@@ -132,13 +133,15 @@ class Screen(QWidget):
     #Grabs all files and directories from current directory
     def get_current_level(self):
         del self.current_level_list[:]
+        #Loops through each item in directory
         for items in os.listdir(self.path.path):
             item_type = self.get_item_type(items)
             item_tuple = (items, item_type)
+
+            #Checks if item is hidden before adding
             if self.hidden_flag:
                 if items[0] != '.':
-                    self.current_level_list.append(item_tuple)
-                    
+                    self.current_level_list.append(item_tuple)        
             else:
                 self.current_level_list.append(item_tuple)
     
@@ -152,7 +155,8 @@ class Screen(QWidget):
             return 'FOLDER'
         else:
             return item[item_index:]
-
+    
+    #Adds new items to screen
     def update_list_widget(self):
         self.list_widget.clear()
         for item in self.current_level_list:
@@ -169,6 +173,8 @@ class Screen(QWidget):
                     return QColor(QValue[0], QValue[1], QValue[2], QValue[3])
                 else:
                     return QColor(255, 255, 255, 255)
+
+    #Refreshes displayed items (and opens if they are openable files)
     def path_update_event(self, file_type = 'FOLDER'):
         try:
             if file_type == 'FOLDER':
@@ -176,6 +182,7 @@ class Screen(QWidget):
                 self.update_list_widget()
                 self.path_label.setText(self.path.path)
             else:
+                #Attempts to open file
                 try:
                     webbrowser.open(self.path.path)
                 except Error:
@@ -185,6 +192,7 @@ class Screen(QWidget):
             print('Debug - Path Error')
             self.path.back_traverse()
 
+    #Toggles between showing hidden items
     def toggle_hidden(self):
         if self.hidden_flag:
             self.hidden_flag = False
@@ -192,6 +200,7 @@ class Screen(QWidget):
             self.hidden_flag = True
         self.path_update_event()
 
+    #Opens a confirmation prompt for methods of deletion
     def delete_prompt(self, tag = 'normal'):
         self.dconf_label = QDialog()
         self.dconf_label.layout = QVBoxLayout()
@@ -223,6 +232,7 @@ class Screen(QWidget):
              self.push_confirm.clicked.connect(self.cut_confirm_pressed)
         self.push_decline.clicked.connect(self.decline_pressed)
 
+    #Confirmation for a normal delete
     def confirm_pressed(self):
         filemanage.delete_file(self.path.path + '/' + self.list_widget.currentItem().text())
         self.path_update_event()
@@ -230,11 +240,13 @@ class Screen(QWidget):
         self.dconf_label.close()
         self.setFocus()
 
+    #Decline for a normal delete
     def decline_pressed(self):
         self.dconf_label.releaseKeyboard()
         self.dconf_label.close()
         self.setFocus()
 
+    #Conform for a cut-paste delete
     def cut_confirm_pressed(self):
         filemanage.copy_file(self.path.copy_path, self.path.copy_file_name, self.path.path, self.path.del_flag)
         self.path_update_event()
@@ -242,14 +254,14 @@ class Screen(QWidget):
         self.dconf_label.close()
         self.setFocus()
 
-
+#Runs gui class
 def run_gui():
     app = QApplication(sys.argv)    
 
     screen = Screen()
     sys.exit(app.exec())
 
-
+#Opening
 if __name__ == '__main__':
     run_gui()
 
